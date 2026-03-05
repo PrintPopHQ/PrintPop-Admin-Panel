@@ -120,88 +120,73 @@ export default function UserDetailPage() {
                         </div>
                     </div>
 
-                    <div className="card">
+                    <div className="card" style={{ height: 'fit-content' }}>
                         <h3 className="card-title">Administrative Actions</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                            {/* Block Action */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{user.is_blocked ? 'Access Revoked' : 'Restrict Access'}</div>
-                                    <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>
-                                        {user.is_blocked ? 'User is currently blocked from all services.' : 'Prevent user from logging in or placing orders.'}
-                                    </div>
-                                </div>
+                        <div className="info-list">
+                            <div className="info-item">
+                                <label>Access Control</label>
+                                <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 8 }}>
+                                    {user.is_blocked
+                                        ? 'This user is currently suspended.'
+                                        : 'Suspend this user to prevent them from accessing the platform.'}
+                                </p>
                                 <button
                                     className={`btn ${user.is_blocked ? 'btn-success' : 'btn-danger'} btn-sm`}
-                                    style={{ minWidth: 100 }}
+                                    style={{ width: '100%', justifyContent: 'center' }}
                                     onClick={() => blockMut.mutate(!user.is_blocked)}
                                     disabled={blockMut.isPending}
                                 >
-                                    {blockMut.isPending ? '...' : (user.is_blocked ? 'Unblock' : 'Block')}
+                                    {blockMut.isPending ? 'Processing...' : (user.is_blocked ? 'Unblock User Account' : 'Block User Account')}
                                 </button>
                             </div>
 
-                            <div style={{ borderTop: '1px solid var(--border)' }}></div>
-
-                            {/* Verify Action */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{user.is_verified ? 'Account Verified' : 'Verify Identity'}</div>
-                                    <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>
-                                        {user.is_verified ? 'User has been verified and has full access.' : 'Manually mark this user as a verified customer.'}
-                                    </div>
-                                </div>
+                            <div className="info-item">
+                                <label>Identity Verification</label>
+                                <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 8 }}>
+                                    {user.is_verified
+                                        ? 'This user has been verified.'
+                                        : 'Manually verify this user if they meet requirements.'}
+                                </p>
                                 <button
                                     className="btn btn-ghost btn-sm"
-                                    style={{ minWidth: 100, border: '1px solid var(--border)' }}
+                                    style={{ width: '100%', border: '1px solid var(--border)', justifyContent: 'center' }}
                                     onClick={() => verifyMut.mutate(!user.is_verified)}
                                     disabled={verifyMut.isPending}
                                 >
-                                    {verifyMut.isPending ? '...' : (user.is_verified ? 'Unverify' : 'Verify')}
+                                    {verifyMut.isPending ? 'Processing...' : (user.is_verified ? 'Unverify Account' : 'Verify Account')}
                                 </button>
                             </div>
 
-                            <div style={{ borderTop: '1px solid var(--border)' }}></div>
-
-                            {/* Password Action */}
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: isChangingPassword ? 12 : 0 }}>
-                                    <div>
-                                        <div style={{ fontWeight: 600, fontSize: 14 }}>Security Override</div>
-                                        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>
-                                            Reset the user's password manually if they lost access.
-                                        </div>
-                                    </div>
-                                    {!isChangingPassword && (
-                                        <button
-                                            className="btn btn-ghost btn-sm"
-                                            style={{ minWidth: 100, border: '1px solid var(--border)' }}
-                                            onClick={() => setIsChangingPassword(true)}
-                                        >
-                                            Reset
-                                        </button>
-                                    )}
-                                </div>
-
-                                {isChangingPassword && (
-                                    <div style={{ background: 'var(--bg)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                            <input
-                                                type="password"
-                                                placeholder="Enter new password"
-                                                className="form-input"
-                                                style={{ height: 36, fontSize: 13 }}
-                                                value={newPassword}
-                                                onChange={e => setNewPassword(e.target.value)}
-                                            />
-                                            <div style={{ display: 'flex', gap: 8 }}>
-                                                <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => passwordMut.mutate()} disabled={passwordMut.isPending}>
-                                                    {passwordMut.isPending ? 'Saving...' : 'Save Password'}
-                                                </button>
-                                                <button className="btn btn-ghost btn-sm" style={{ flex: 1, border: '1px solid var(--border)' }} onClick={() => setIsChangingPassword(false)}>
-                                                    Cancel
-                                                </button>
-                                            </div>
+                            <div className="info-item">
+                                <label>Security Management</label>
+                                <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 8 }}>
+                                    Update the user password if they have lost access.
+                                </p>
+                                {!isChangingPassword ? (
+                                    <button
+                                        className="btn btn-ghost btn-sm"
+                                        style={{ width: '100%', border: '1px solid var(--border)', justifyContent: 'center' }}
+                                        onClick={() => setIsChangingPassword(true)}
+                                    >
+                                        Change Password
+                                    </button>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255,255,255,0.02)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                                        <input
+                                            type="password"
+                                            placeholder="Enter new password"
+                                            className="form-input"
+                                            style={{ height: 36, fontSize: 13 }}
+                                            value={newPassword}
+                                            onChange={e => setNewPassword(e.target.value)}
+                                        />
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => passwordMut.mutate()} disabled={passwordMut.isPending}>
+                                                Save
+                                            </button>
+                                            <button className="btn btn-ghost btn-sm" style={{ flex: 1, border: '1px solid var(--border)' }} onClick={() => setIsChangingPassword(false)}>
+                                                Cancel
+                                            </button>
                                         </div>
                                     </div>
                                 )}

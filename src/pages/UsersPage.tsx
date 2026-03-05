@@ -28,7 +28,7 @@ export default function UsersPage() {
     const [search, setSearch] = useState('');
     const limit = 10;
 
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, isError } = useQuery({
         queryKey: ['users', page, search],
         queryFn: () => getUsers(page, limit, search).then(res => res.data.data),
     });
@@ -72,22 +72,15 @@ export default function UsersPage() {
             header: 'Status',
             cell: ({ row }) => {
                 const user = row.original;
-                return (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                        {user.is_blocked ? (
-                            <span className="badge badge-error" style={{ fontSize: '10px', padding: '2px 8px' }}>Blocked</span>
-                        ) : (
-                            <span className={`badge ${user.is_verified ? 'badge-primary' : 'badge-muted'}`} style={{ fontSize: '10px', padding: '2px 8px' }}>
-                                {user.is_verified ? 'Verified' : 'Unverified'}
-                            </span>
-                        )}
-                    </div>
-                );
+                if (user.is_blocked) return <span className="badge badge-error">Blocked</span>;
+                return user.is_verified
+                    ? <span className="badge badge-primary">Verified</span>
+                    : <span className="badge badge-muted">Unverified</span>;
             }
         }),
         col.accessor('created_at', {
             header: 'Joined',
-            cell: info => <span style={{ fontSize: 13 }}>{new Date(info.getValue()).toLocaleDateString()}</span>,
+            cell: info => new Date(info.getValue()).toLocaleDateString(),
         }),
         col.display({
             id: 'actions',
@@ -95,105 +88,80 @@ export default function UsersPage() {
             cell: ({ row }) => {
                 const user = row.original;
                 return (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: 4 }}>
-                        <ActionMenu
-                            items={[
-                                {
-                                    label: 'View Details',
-                                    icon: '👁️',
-                                    onClick: () => navigate(`/users/${user.id}`),
+                    <ActionMenu
+                        items={[
+                            { label: 'View Details', icon: '👁️', onClick: () => navigate(`/users/${user.id}`) },
+                            {
+                                label: user.is_verified ? 'Unverify' : 'Verify',
+                                icon: user.is_verified ? '❌' : '✅',
+                                onClick: () => verifyMut.mutate({ id: user.id, verified: !user.is_verified }),
+                            },
+                            {
+                                label: user.is_blocked ? 'Unblock' : 'Block',
+                                icon: '🚫',
+                                variant: user.is_blocked ? 'success' : 'danger',
+                                onClick: () => {
+                                    if (user.is_blocked || confirm(`Block ${user.email}?`)) {
+                                        blockMut.mutate({ id: user.id, blocked: !user.is_blocked });
+                                    }
                                 },
-                                {
-                                    label: user.is_verified ? 'Unverify User' : 'Verify User',
-                                    icon: user.is_verified ? '❌' : '✅',
-                                    onClick: () => verifyMut.mutate({ id: user.id, verified: !user.is_verified }),
-                                },
-                                {
-                                    label: user.is_blocked ? 'Unblock User' : 'Block User',
-                                    icon: '🚫',
-                                    variant: user.is_blocked ? 'success' : 'danger',
-                                    onClick: () => {
-                                        if (user.is_blocked || confirm(`Are you sure you want to block ${user.email}?`)) {
-                                            blockMut.mutate({ id: user.id, blocked: !user.is_blocked });
-                                        }
-                                    },
-                                },
-                            ]}
-                        />
-                    </div>
+                            },
+                        ]}
+                    />
                 );
             }
         }),
     ], [navigate, blockMut, verifyMut]);
 
-    const users = useMemo(() => data?.users || [], [data]);
-    const table = useReactTable({
-        data: users,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-    });
+    const users = data?.users || [];
+    const table = useReactTable({ data: users, columns, getCoreRowModel: getCoreRowModel() });
 
     return (
-        <div className="users-page">
+        <div>
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Users</h1>
-                    <p className="page-subtitle">Manage customer accounts and their permissions</p>
+                    <p className="page-subtitle">Manage customer accounts</p>
                 </div>
 
-                <div className="search-wrapper" style={{ maxWidth: 280 }}>
-                    <svg className="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                <div className="search-wrapper" style={{ maxWidth: 300 }}>
+                    <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                     <input
                         type="text"
-                        placeholder="Search users..."
+                        placeholder="Search by name or email..."
                         className="search-input"
-                        style={{ padding: '8px 12px 8px 34px', fontSize: '13px' }}
                         value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setPage(1);
-                        }}
+                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                     />
                 </div>
             </div>
 
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            {isLoading && <div className="center"><div className="spinner" /></div>}
+            {isError && <div className="alert alert-error">Failed to load users.</div>}
+
+            {!isLoading && !isError && (
                 <div className="table-wrap">
-                    <table className="table">
+                    <table>
                         <thead>
                             {table.getHeaderGroups().map(hg => (
                                 <tr key={hg.id}>
                                     {hg.headers.map(h => (
-                                        <th key={h.id}>
-                                            {flexRender(h.column.columnDef.header, h.getContext())}
-                                        </th>
+                                        <th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
                                     ))}
                                 </tr>
                             ))}
                         </thead>
                         <tbody>
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan={columns.length} style={{ textAlign: 'center', padding: '60px 0' }}>
-                                        <div className="spinner" style={{ margin: '0 auto' }} />
-                                    </td>
-                                </tr>
-                            ) : users.length === 0 ? (
-                                <tr>
-                                    <td colSpan={columns.length} style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-dim)', fontSize: 13 }}>
-                                        No users found matching your criteria.
-                                    </td>
-                                </tr>
+                            {users.length === 0 ? (
+                                <tr><td colSpan={columns.length} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>No users found.</td></tr>
                             ) : (
                                 table.getRowModel().rows.map(row => (
                                     <tr key={row.id}>
                                         {row.getVisibleCells().map(cell => (
-                                            <td key={cell.id}>
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
+                                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                                         ))}
                                     </tr>
                                 ))
@@ -201,31 +169,19 @@ export default function UsersPage() {
                         </tbody>
                     </table>
                 </div>
+            )}
 
-                {data && data.lastPage > 1 && (
-                    <div className="pagination" style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', marginTop: 0, background: 'rgba(255,255,255,0.01)' }}>
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            style={{ height: 28, fontSize: 12 }}
-                            disabled={page === 1}
-                            onClick={() => setPage(p => p - 1)}
-                        >
-                            Previous
+            {data && data.lastPage > 1 && (
+                <div className="pagination">
+                    <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                    {[...Array(data.lastPage)].map((_, i) => (
+                        <button key={i} className={`page-btn ${page === i + 1 ? 'active' : ''}`} onClick={() => setPage(i + 1)}>
+                            {i + 1}
                         </button>
-                        <span className="pagination-info" style={{ fontSize: 12, color: 'var(--text-dim)', margin: '0 16px' }}>
-                            Page {page} of {data.lastPage}
-                        </span>
-                        <button
-                            className="btn btn-ghost btn-sm"
-                            style={{ height: 28, fontSize: 12 }}
-                            disabled={page === data.lastPage}
-                            onClick={() => setPage(p => p + 1)}
-                        >
-                            Next
-                        </button>
-                    </div>
-                )}
-            </div>
+                    ))}
+                    <button className="page-btn" disabled={page === data.lastPage} onClick={() => setPage(p => p + 1)}>›</button>
+                </div>
+            )}
         </div>
     );
 }

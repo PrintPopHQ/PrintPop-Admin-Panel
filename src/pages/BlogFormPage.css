@@ -1,0 +1,175 @@
+/* ── Quill Editor theme override for dark mode ── */
+.quill-wrap .ql-toolbar {
+    background: var(--surface2);
+    border: 1px solid var(--border) !important;
+    border-bottom: none !important;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.quill-wrap .ql-container {
+    background: var(--bg);
+    border: 1px solid var(--border) !important;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    min-height: 280px;
+}
+
+.quill-wrap .ql-editor {
+    min-height: 280px;
+    color: var(--text);
+    line-height: 1.7;
+}
+
+.quill-wrap .ql-editor.ql-blank::before {
+    color: var(--text-dim) !important;
+    font-style: normal;
+}
+
+/* toolbar icons */
+.quill-wrap .ql-toolbar .ql-stroke {
+    stroke: var(--text-muted) !important;
+}
+
+.quill-wrap .ql-toolbar .ql-fill {
+    fill: var(--text-muted) !important;
+}
+
+.quill-wrap .ql-toolbar .ql-picker {
+    color: var(--text-muted) !important;
+}
+
+.quill-wrap .ql-toolbar .ql-picker-label {
+    color: var(--text-muted) !important;
+}
+
+.quill-wrap .ql-toolbar button:hover .ql-stroke,
+.quill-wrap .ql-toolbar button.ql-active .ql-stroke {
+    stroke: var(--primary) !important;
+}
+
+.quill-wrap .ql-toolbar button:hover .ql-fill,
+.quill-wrap .ql-toolbar button.ql-active .ql-fill {
+    fill: var(--primary) !important;
+}
+
+/* picker dropdown */
+.quill-wrap .ql-picker-options {
+    background: var(--surface2) !important;
+    border-color: var(--border) !important;
+}
+
+/* ── Sanitized blog preview ── */
+.blog-preview {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.blog-preview h1,
+.blog-preview h2,
+.blog-preview h3 {
+    margin: 20px 0 10px;
+    font-weight: 700;
+}
+
+.blog-preview p {
+    margin: 10px 0;
+}
+
+.blog-preview ul,
+.blog-preview ol {
+    margin: 10px 0;
+    padding-left: 24px;
+}
+
+.blog-preview li {
+    margin: 4px 0;
+}
+
+.blog-preview blockquote {
+    border-left: 3px solid var(--primary);
+    margin: 16px 0;
+    padding: 8px 16px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.blog-preview code {
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.blog-preview pre {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    overflow-x: auto;
+    margin: 16px 0;
+}
+
+.blog-preview img {
+    max-width: 100%;
+    border-radius: var(--radius-sm);
+    margin: 12px 0;
+}
+
+.blog-preview a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+/* ── Image Upload Drop Zone ── */
+.drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.drop-zone:hover {
+    background: var(--surface2);
+    border-color: var(--text-dim);
+}
+
+.drop-zone.dragging {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.cover-img-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cover-img-preview img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.cover-img-actions {
+    display: flex;
+    gap: 8px;
+}

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = 'https://printpop-be.onrender.com';
 
 const api = axios.create({ baseURL: API_BASE });
 
@@ -43,3 +43,19 @@ export const updateBlog = (id: string, data: object) => api.patch(`/api/blogs/${
 export const publishBlog = (id: string) => api.patch(`/api/blogs/${id}/publish`);
 export const unpublishBlog = (id: string) => api.patch(`/api/blogs/${id}/unpublish`);
 export const deleteBlog = (id: string) => api.delete(`/api/blogs/${id}`);
+
+// ─── User Management ──────────────────────────────────────────────────────────
+export const getUsers = (page = 1, limit = 10, search?: string) => {
+    const params: Record<string, unknown> = { page, limit };
+    if (search) params.search = search;
+    return api.get('/api/admin/users', { params });
+};
+export const getUserById = (id: string) => api.get(`/api/admin/users/${id}`);
+export const updateUserBlock = (id: string, is_blocked: boolean) =>
+    api.patch(`/api/admin/users/${id}/block`, { is_blocked });
+export const updateUserVerify = (id: string, is_verified: boolean) =>
+    api.patch(`/api/admin/users/${id}/verify`, { is_verified });
+export const changeUserPassword = (id: string, new_password: string) =>
+    api.patch(`/api/admin/users/${id}/change-password`, { new_password });
+export const getUserOrders = (id: string) => api.get(`/api/admin/users/${id}/orders`);
+export const getUserCart = (id: string) => api.get(`/api/admin/users/${id}/cart`);

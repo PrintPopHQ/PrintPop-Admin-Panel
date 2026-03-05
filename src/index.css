@@ -218,6 +218,40 @@ textarea.form-input {
   resize: vertical;
 }
 
+/* ── Search Bar ── */
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 320px;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.search-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px 10px 38px;
+  color: var(--text);
+  font-size: 14px;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
 /* ── Card ── */
 .card {
   background: var(--surface);
@@ -481,6 +515,60 @@ tr:hover td {
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-item {
+  padding: 12px 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-item:hover {
+  color: var(--text);
+}
+
+.tab-item.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ── Info List ── */
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.info-item span {
+  font-size: 14px;
+  color: var(--text);
 }
 
 @keyframes spin {

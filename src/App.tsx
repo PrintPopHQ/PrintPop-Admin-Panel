@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import BlogsPage from './pages/BlogsPage';
 import BlogFormPage from './pages/BlogFormPage';
 import AdminsPage from './pages/AdminsPage';
+import UsersPage from './pages/UsersPage';
+import UserDetailPage from './pages/UserDetailPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -21,6 +23,8 @@ export default function App() {
         <Route path="blogs" element={<BlogsPage />} />
         <Route path="blogs/new" element={<BlogFormPage />} />
         <Route path="blogs/:id/edit" element={<BlogFormPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="users/:id" element={<UserDetailPage />} />
         <Route path="admins" element={<AdminsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

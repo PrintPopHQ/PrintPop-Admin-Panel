@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     useReactTable,
@@ -9,6 +9,7 @@ import {
 import { getAdmins, addAdmin, updateAdmin, deleteAdmin } from '../api';
 import { useAuth } from '../context/AuthContext';
 import ActionMenu from '../components/ActionMenu';
+import ConfirmModal from '../components/ConfirmModal';
 
 interface AdminRow {
     id: string;
@@ -26,19 +27,36 @@ export default function AdminsPage() {
     const { admin: me } = useAuth();
     const qc = useQueryClient();
 
-    // Add modal
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
+    const limit = 10;
+
+    // Modal states
     const [showAdd, setShowAdd] = useState(false);
     const [addForm, setAddForm] = useState(ADD_INIT);
     const [addError, setAddError] = useState('');
 
-    // Edit modal
     const [editTarget, setEditTarget] = useState<AdminRow | null>(null);
     const [editForm, setEditForm] = useState(EDIT_INIT);
     const [editError, setEditError] = useState('');
 
+    const [confirm, setConfirm] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: 'danger' | 'primary' | 'success' | 'warning';
+        confirmText?: string;
+    }>({
+        show: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
+
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['admins'],
-        queryFn: () => getAdmins().then(r => r.data.data),
+        queryKey: ['admins', page, search],
+        queryFn: () => getAdmins(page, limit, search).then(r => r.data.data),
     });
 
     const addMut = useMutation({
@@ -76,7 +94,10 @@ export default function AdminsPage() {
 
     const deleteMut = useMutation({
         mutationFn: (id: string) => deleteAdmin(id),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['admins'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admins'] });
+            setConfirm(prev => ({ ...prev, show: false }));
+        },
     });
 
     const openEdit = (a: AdminRow) => {
@@ -85,7 +106,7 @@ export default function AdminsPage() {
         setEditError('');
     };
 
-    const columns = [
+    const columns = useMemo(() => [
         col.accessor('name', {
             header: 'Name',
             cell: info => (
@@ -121,21 +142,38 @@ export default function AdminsPage() {
             header: '',
             cell: ({ row }) => {
                 const a = row.original;
+                // Super Admins cannot be edited or deleted
                 if (a.role === 'super_admin') return null;
+
+                // Don't allow deleting self
+                const isSelf = a.id === me?.id;
                 const items = [
                     { icon: '✏️', label: 'Edit', onClick: () => openEdit(a) },
-                    ...(a.id !== me?.id ? [{
+                    ...(!isSelf ? [{
                         icon: '🗑️', label: 'Delete', variant: 'danger' as const,
-                        onClick: () => { if (window.confirm(`Delete admin "${a.name}"?`)) deleteMut.mutate(a.id); },
+                        onClick: () => {
+                            setConfirm({
+                                show: true,
+                                title: 'Delete Admin',
+                                message: `Are you sure you want to PERMANENTLY delete the admin "${a.name}"? This action cannot be undone.`,
+                                confirmText: 'Delete Admin',
+                                variant: 'danger',
+                                onConfirm: () => deleteMut.mutate(a.id),
+                            });
+                        },
                         disabled: deleteMut.isPending,
                     }] : []),
                 ];
-                return <ActionMenu items={items} />;
+                return (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <ActionMenu items={items} />
+                    </div>
+                );
             },
         }),
-    ];
+    ], [me, deleteMut]);
 
-    const admins: AdminRow[] = data ?? [];
+    const admins: AdminRow[] = data?.admins ?? [];
     const table = useReactTable({ data: admins, columns, getCoreRowModel: getCoreRowModel() });
 
     return (
@@ -145,9 +183,25 @@ export default function AdminsPage() {
                     <h1 className="page-title">Admins</h1>
                     <p className="page-subtitle">Manage admin accounts</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => { setShowAdd(true); setAddError(''); setAddForm(ADD_INIT); }}>
-                    + Add Admin
-                </button>
+
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div className="search-wrapper" style={{ minWidth: 260 }}>
+                        <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Search by name or email..."
+                            className="search-input"
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                        />
+                    </div>
+                    <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={() => { setShowAdd(true); setAddError(''); setAddForm(ADD_INIT); }}>
+                        + Add Admin
+                    </button>
+                </div>
             </div>
 
             {isLoading && <div className="center"><div className="spinner" /></div>}
@@ -166,7 +220,7 @@ export default function AdminsPage() {
                             ))}
                         </thead>
                         <tbody>
-                            {table.getRowModel().rows.length === 0 ? (
+                            {admins.length === 0 ? (
                                 <tr><td colSpan={columns.length} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>No admins found.</td></tr>
                             ) : (
                                 table.getRowModel().rows.map(row => (
@@ -179,6 +233,18 @@ export default function AdminsPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {data && data.lastPage > 1 && (
+                <div className="pagination">
+                    <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                    {[...Array(data.lastPage)].map((_, i) => (
+                        <button key={i} className={`page-btn ${page === i + 1 ? 'active' : ''}`} onClick={() => setPage(i + 1)}>
+                            {i + 1}
+                        </button>
+                    ))}
+                    <button className="page-btn" disabled={page === data.lastPage} onClick={() => setPage(p => p + 1)}>›</button>
                 </div>
             )}
 
@@ -247,6 +313,13 @@ export default function AdminsPage() {
                     </div>
                 </div>
             )}
+
+            {/* Confirmation Modal */}
+            <ConfirmModal
+                {...confirm}
+                onCancel={() => setConfirm(prev => ({ ...prev, show: false }))}
+                isLoading={deleteMut.isPending}
+            />
         </div>
     );
 }

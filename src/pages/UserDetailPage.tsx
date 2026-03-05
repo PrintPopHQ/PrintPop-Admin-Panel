@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUserById, getUserOrders, getUserCart, updateUserBlock, updateUserVerify, changeUserPassword } from '../api';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function UserDetailPage() {
     const { id } = useParams();
@@ -10,6 +11,20 @@ export default function UserDetailPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'cart'>('overview');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [newPassword, setNewPassword] = useState('');
+
+    const [confirm, setConfirm] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: 'danger' | 'primary' | 'success' | 'warning';
+        confirmText?: string;
+    }>({
+        show: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
 
     const { data: user, isLoading: loadingUser } = useQuery({
         queryKey: ['user', id],
@@ -31,26 +46,69 @@ export default function UserDetailPage() {
 
     const blockMut = useMutation({
         mutationFn: (blocked: boolean) => updateUserBlock(id!, blocked),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['user', id] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['user', id] });
+            setConfirm(prev => ({ ...prev, show: false }));
+        },
     });
 
     const verifyMut = useMutation({
         mutationFn: (verified: boolean) => updateUserVerify(id!, verified),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['user', id] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['user', id] });
+            setConfirm(prev => ({ ...prev, show: false }));
+        },
     });
 
     const passwordMut = useMutation({
         mutationFn: () => changeUserPassword(id!, newPassword),
         onSuccess: () => {
-            alert('Password changed successfully');
             setIsChangingPassword(false);
             setNewPassword('');
+            setConfirm(prev => ({ ...prev, show: false }));
         },
-        onError: (err: any) => alert(err.response?.data?.message || 'Failed to change password'),
+        onError: (err: any) => {
+            alert(err.response?.data?.message || 'Failed to change password');
+            setConfirm(prev => ({ ...prev, show: false }));
+        },
     });
 
     if (loadingUser) return <div className="center"><div className="spinner" /></div>;
     if (!user) return <div className="center">User not found.</div>;
+
+    const handleBlockToggle = () => {
+        setConfirm({
+            show: true,
+            title: user.is_blocked ? 'Unblock User' : 'Block User',
+            message: `Are you sure you want to ${user.is_blocked ? 'unblock' : 'block'} ${user.email}?`,
+            confirmText: user.is_blocked ? 'Unblock' : 'Block',
+            variant: user.is_blocked ? 'success' : 'danger',
+            onConfirm: () => blockMut.mutate(!user.is_blocked),
+        });
+    };
+
+    const handleVerifyToggle = () => {
+        setConfirm({
+            show: true,
+            title: user.is_verified ? 'Unverify User' : 'Verify User',
+            message: `Are you sure you want to ${user.is_verified ? 'unverify' : 'verify'} ${user.email}?`,
+            confirmText: user.is_verified ? 'Unverify' : 'Verify',
+            variant: 'primary',
+            onConfirm: () => verifyMut.mutate(!user.is_verified),
+        });
+    };
+
+    const handlePasswordChange = () => {
+        if (!newPassword) return;
+        setConfirm({
+            show: true,
+            title: 'Change Password',
+            message: `Are you sure you want to change the password for ${user.email}?`,
+            confirmText: 'Change Password',
+            variant: 'primary',
+            onConfirm: () => passwordMut.mutate(),
+        });
+    };
 
     return (
         <div className="user-detail-page">
@@ -133,7 +191,7 @@ export default function UserDetailPage() {
                                 <button
                                     className={`btn ${user.is_blocked ? 'btn-success' : 'btn-danger'} btn-sm`}
                                     style={{ width: '100%', justifyContent: 'center' }}
-                                    onClick={() => blockMut.mutate(!user.is_blocked)}
+                                    onClick={handleBlockToggle}
                                     disabled={blockMut.isPending}
                                 >
                                     {blockMut.isPending ? 'Processing...' : (user.is_blocked ? 'Unblock User Account' : 'Block User Account')}
@@ -150,7 +208,7 @@ export default function UserDetailPage() {
                                 <button
                                     className="btn btn-ghost btn-sm"
                                     style={{ width: '100%', border: '1px solid var(--border)', justifyContent: 'center' }}
-                                    onClick={() => verifyMut.mutate(!user.is_verified)}
+                                    onClick={handleVerifyToggle}
                                     disabled={verifyMut.isPending}
                                 >
                                     {verifyMut.isPending ? 'Processing...' : (user.is_verified ? 'Unverify Account' : 'Verify Account')}
@@ -181,7 +239,7 @@ export default function UserDetailPage() {
                                             onChange={e => setNewPassword(e.target.value)}
                                         />
                                         <div style={{ display: 'flex', gap: 8 }}>
-                                            <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={() => passwordMut.mutate()} disabled={passwordMut.isPending}>
+                                            <button className="btn btn-primary btn-sm" style={{ flex: 1 }} onClick={handlePasswordChange} disabled={passwordMut.isPending || !newPassword}>
                                                 Save
                                             </button>
                                             <button className="btn btn-ghost btn-sm" style={{ flex: 1, border: '1px solid var(--border)' }} onClick={() => setIsChangingPassword(false)}>
@@ -261,6 +319,13 @@ export default function UserDetailPage() {
                     </div>
                 </div>
             )}
+
+            {/* Confirmation Modal */}
+            <ConfirmModal
+                {...confirm}
+                onCancel={() => setConfirm(prev => ({ ...prev, show: false }))}
+                isLoading={blockMut.isPending || verifyMut.isPending || passwordMut.isPending}
+            />
         </div>
     );
 }

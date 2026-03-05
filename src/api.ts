@@ -57,3 +57,8 @@ export const deleteUser = (id: string) => api.delete(`/api/admin/users/${id}`);
 export const changeUserPassword = (id: string, new_password: string) => api.patch(`/api/admin/users/${id}/change-password`, { new_password });
 export const getUserOrders = (id: string) => api.get(`/api/admin/users/${id}/orders`);
 export const getUserCart = (id: string) => api.get(`/api/admin/users/${id}/cart`);
+
+// ─── Order Management ─────────────────────────────────────────────────────────
+export const getAdminOrders = (page = 1, limit = 10, search = '', type = 'all') =>
+    api.get(`/api/admin/orders?page=${page}&limit=${limit}&search=${search}&type=${type}`);
+export const getAdminOrderById = (id: string) => api.get(`/api/admin/orders/${id}`);

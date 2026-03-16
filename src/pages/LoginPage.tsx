@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminLogin } from '../api';
 import './LoginPage.css';
+import logoUrl from '../assets/plogo.jfif';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -32,10 +33,8 @@ export default function LoginPage() {
         <div className="login-page">
             <div className="login-card">
                 <div className="login-logo">
-                    <span className="login-logo-icon">🖨️</span>
-                    <div>
-                        <h1 className="login-title">PrintPop</h1>
-                        <p className="login-subtitle">Admin Panel</p>
+                    <div className="sidebar-logo" style={{ width: '100%', marginBottom: 0, padding: 0, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src={logoUrl} alt="PrintPop" style={{ height: 32, objectFit: 'contain', borderRadius: 4 }} />
                     </div>
                 </div>
 

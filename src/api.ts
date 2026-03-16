@@ -55,7 +55,8 @@ export const updateUserBlock = (id: string, is_blocked: boolean) => api.patch(`/
 export const updateUserVerify = (id: string, is_verified: boolean) => api.patch(`/api/admin/users/${id}/verify`, { is_verified });
 export const deleteUser = (id: string) => api.delete(`/api/admin/users/${id}`);
 export const changeUserPassword = (id: string, new_password: string) => api.patch(`/api/admin/users/${id}/change-password`, { new_password });
-export const getUserOrders = (id: string) => api.get(`/api/admin/users/${id}/orders`);
+export const getUserOrders = (id: string, page = 1, limit = 10, search = '') => 
+    api.get(`/api/admin/users/${id}/orders?page=${page}&limit=${limit}&search=${search}`);
 export const getUserCart = (id: string) => api.get(`/api/admin/users/${id}/cart`);
 
 // ─── Order Management ─────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
     useReactTable,
@@ -15,7 +15,10 @@ const col = createColumnHelper<any>();
 export default function OrderDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+    const backPath = location.state?.from || '/orders';
 
     const { data: order, isLoading, isError } = useQuery({
         queryKey: ['admin-order', id],
@@ -100,7 +103,7 @@ export default function OrderDetailsPage() {
         <div className="order-details-page">
             <div className="page-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => navigate('/orders')}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => navigate(backPath)}>
                         ← Back
                     </button>
                     <div>

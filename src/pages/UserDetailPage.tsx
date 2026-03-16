@@ -8,6 +8,7 @@ import {
     createColumnHelper,
 } from '@tanstack/react-table';
 import { getUserById, getUserOrders, getUserCart, updateUserBlock, updateUserVerify, changeUserPassword } from '../api';
+import ActionMenu from '../components/ActionMenu';
 import ConfirmModal from '../components/ConfirmModal';
 
 const col = createColumnHelper<any>();
@@ -19,6 +20,12 @@ export default function UserDetailPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'cart'>('overview');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [newPassword, setNewPassword] = useState('');
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+    // Orders tab state
+    const [orderPage, setOrderPage] = useState(1);
+    const [orderSearch, setOrderSearch] = useState('');
+    const orderLimit = 10;
 
     const [confirm, setConfirm] = useState<{
         show: boolean;
@@ -40,11 +47,13 @@ export default function UserDetailPage() {
         enabled: !!id,
     });
 
-    const { data: orders, isLoading: loadingOrders } = useQuery({
-        queryKey: ['user-orders', id],
-        queryFn: () => getUserOrders(id!).then(res => res.data.data),
+    const { data: orderData, isLoading: loadingOrders } = useQuery({
+        queryKey: ['user-orders', id, orderPage, orderSearch],
+        queryFn: () => getUserOrders(id!, orderPage, orderLimit, orderSearch).then(res => res.data.data),
         enabled: activeTab === 'orders' && !!id,
     });
+
+    const orders = orderData?.orders || [];
 
     const { data: cart, isLoading: loadingCart } = useQuery({
         queryKey: ['user-cart', id],
@@ -83,7 +92,7 @@ export default function UserDetailPage() {
 
     const columns = useMemo(() => [
         col.accessor('id', {
-            header: 'ID',
+            header: 'Order ID',
             cell: info => {
                 const id = info.getValue() || '';
                 const shortId = id.split('-')[0];
@@ -102,42 +111,40 @@ export default function UserDetailPage() {
                 );
             },
         }),
-        col.accessor('created_at', {
-            header: 'Date',
-            cell: info => <span style={{ color: 'var(--text-muted)' }}>{new Date(info.getValue()).toLocaleDateString()}</span>,
-        }),
         col.accessor('payment_status', {
             header: 'Status',
             cell: info => {
                 const status = info.getValue();
-                return <span className={`badge ${status === 'PAID' ? 'badge-success' : 'badge-warning'}`}>{status}</span>;
-            },
-        }),
-        col.accessor('items', {
-            header: 'Items',
-            cell: info => {
-                const items = info.getValue();
-                if (!items || items.length === 0) return <span style={{ color: 'var(--text-dim)' }}>0 items</span>;
                 return (
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {items.map((item: any) => (
-                            <img
-                                key={item.id}
-                                src={item.custom_image_url || item.model?.model_pic}
-                                alt=""
-                                style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'cover', border: '1px solid var(--border)' }}
-                                title={item.model?.name || 'Item'}
-                            />
-                        ))}
-                    </div>
+                    <span className={`badge ${status === 'PAID' ? 'badge-success' : status === 'PENDING' ? 'badge-warning' : 'badge-muted'}`}>
+                        {status}
+                    </span>
                 );
-            },
+            }
         }),
         col.accessor('total_price', {
             header: 'Total',
-            cell: info => <span style={{ fontWeight: 600, color: 'var(--text)' }}>{info.getValue() ? `$${info.getValue()}` : 'N/A'}</span>,
+            cell: info => <span style={{ fontWeight: 600 }}>${Number(info.getValue()).toFixed(2)}</span>,
         }),
-    ], []);
+        col.accessor('created_at', {
+            header: 'Date',
+            cell: info => <span style={{ color: 'var(--text-muted)' }}>{new Date(info.getValue()).toLocaleDateString()}</span>,
+        }),
+        col.display({
+            id: 'actions',
+            header: '',
+            cell: ({ row }) => {
+                const o = row.original;
+                return (
+                    <ActionMenu
+                        items={[
+                            { label: 'View Details', icon: '👁️', onClick: () => navigate(`/orders/${o.id}`, { state: { from: `/users/${id}` } }) },
+                        ]}
+                    />
+                );
+            }
+        }),
+    ], [navigate, id]);
 
     const tableData = activeTab === 'orders' ? (orders || []) : (cart || []);
     const table = useReactTable({ data: tableData, columns, getCoreRowModel: getCoreRowModel() });
@@ -324,41 +331,73 @@ export default function UserDetailPage() {
             )}
 
             {(activeTab === 'orders' || activeTab === 'cart') && (
-                <div className="table-wrap" style={{ marginTop: 24 }}>
-                    <table>
-                        <thead>
-                            {table.getHeaderGroups().map(hg => (
-                                <tr key={hg.id}>
-                                    {hg.headers.map(h => (
-                                        <th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
-                                    ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody>
-                            {(activeTab === 'orders' ? loadingOrders : loadingCart) ? (
-                                <tr>
-                                    <td colSpan={columns.length} style={{ textAlign: 'center', padding: '40px 0' }}>
-                                        <div className="spinner" style={{ margin: '0 auto' }} />
-                                    </td>
-                                </tr>
-                            ) : tableData.length === 0 ? (
-                                <tr>
-                                    <td colSpan={columns.length} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                                        No {activeTab === 'orders' ? 'orders' : 'items'} found.
-                                    </td>
-                                </tr>
-                            ) : (
-                                table.getRowModel().rows.map(row => (
-                                    <tr key={row.id}>
-                                        {row.getVisibleCells().map(cell => (
-                                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                <div style={{ marginTop: 24 }}>
+                    {activeTab === 'orders' && (
+                        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                            <div className="search-wrapper" style={{ maxWidth: 280 }}>
+                                <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Search by Order ID..."
+                                    className="search-input"
+                                    value={orderSearch}
+                                    onChange={(e) => { setOrderSearch(e.target.value); setOrderPage(1); }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="table-wrap">
+                        <table>
+                            <thead>
+                                {table.getHeaderGroups().map(hg => (
+                                    <tr key={hg.id}>
+                                        {hg.headers.map(h => (
+                                            <th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
                                         ))}
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ))}
+                            </thead>
+                            <tbody>
+                                {(activeTab === 'orders' ? loadingOrders : loadingCart) ? (
+                                    <tr>
+                                        <td colSpan={columns.length} style={{ textAlign: 'center', padding: '40px 0' }}>
+                                            <div className="spinner" style={{ margin: '0 auto' }} />
+                                        </td>
+                                    </tr>
+                                ) : tableData.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={columns.length} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                                            No {activeTab === 'orders' ? 'orders' : 'items'} found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    table.getRowModel().rows.map(row => (
+                                        <tr key={row.id}>
+                                            {row.getVisibleCells().map(cell => (
+                                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {activeTab === 'orders' && orderData && orderData.lastPage > 1 && (
+                        <div className="pagination">
+                            <button className="page-btn" disabled={orderPage === 1} onClick={() => setOrderPage(p => p - 1)}>‹</button>
+                            {[...Array(orderData.lastPage)].map((_, i) => (
+                                <button key={i} className={`page-btn ${orderPage === i + 1 ? 'active' : ''}`} onClick={() => setOrderPage(i + 1)}>
+                                    {i + 1}
+                                </button>
+                            ))}
+                            <button className="page-btn" disabled={orderPage === orderData.lastPage} onClick={() => setOrderPage(p => p + 1)}>›</button>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -368,6 +407,24 @@ export default function UserDetailPage() {
                 onCancel={() => setConfirm(prev => ({ ...prev, show: false }))}
                 isLoading={blockMut.isPending || verifyMut.isPending || passwordMut.isPending}
             />
+
+            {previewImage && (
+                <div className="modal-overlay" onClick={() => setPreviewImage(null)} style={{ background: 'rgba(0,0,0,0.8)' }}>
+                    <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+                        <img src={previewImage} alt="Preview" style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 12, boxShadow: 'var(--shadow)' }} />
+                        <button 
+                            onClick={() => setPreviewImage(null)}
+                            style={{ position: 'absolute', top: -40, right: 0, background: 'none', border: 'none', color: 'white' }}
+                        >
+                            Close ✕
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                .preview-hover-btn:hover { opacity: 1 !important; }
+            `}</style>
         </div>
     );
 }

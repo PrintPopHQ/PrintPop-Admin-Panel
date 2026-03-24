@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = 'https://printpop-be.onrender.com';
-// const API_BASE = 'http://localhost:8080';
+// const API_BASE = 'https://printpop-be.onrender.com';
+const API_BASE = 'http://localhost:8080';
 
 export const api = axios.create({ baseURL: API_BASE });
 
@@ -12,7 +12,20 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Handle custom response codes from backend
+        if (response.data && response.data.responseCode && response.data.responseCode !== 2000) {
+            let message = response.data.message || 'API Error';
+            if (message.startsWith('Stripe Error: ')) {
+                message = message.replace('Stripe Error: ', '');
+            }
+            return Promise.reject({
+                response: response,
+                message: message
+            });
+        }
+        return response;
+    },
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('admin_token');
@@ -81,3 +94,9 @@ export const getAdminOrderById = (id: string) => api.get(`/api/admin/orders/${id
 // ─── Banner Images ────────────────────────────────────────────────────────────
 export const getBannerImages = () => api.get('/api/banner-images');
 export const updateBannerImages = (urls: string[]) => api.post('/api/banner-images', { urls });
+
+// ─── Coupons ──────────────────────────────────────────────────────────────────
+export const listCoupons = (limit = 10, starting_after?: string) =>
+    api.get('/api/admin/coupons', { params: { limit, starting_after } });
+export const createCoupon = (data: any) => api.post('/api/admin/coupons', data);
+export const deleteCoupon = (id: string) => api.delete(`/api/admin/coupons/${id}`);

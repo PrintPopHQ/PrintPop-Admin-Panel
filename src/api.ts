@@ -3,13 +3,27 @@ import axios from 'axios';
 const API_BASE = 'https://printpop-be.onrender.com';
 // const API_BASE = 'http://localhost:8080';
 
-const api = axios.create({ baseURL: API_BASE });
+export const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('admin_token');
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
 });
+
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
 
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
 export const adminLogin = (email: string, password: string) =>
@@ -55,7 +69,7 @@ export const updateUserBlock = (id: string, is_blocked: boolean) => api.patch(`/
 export const updateUserVerify = (id: string, is_verified: boolean) => api.patch(`/api/admin/users/${id}/verify`, { is_verified });
 export const deleteUser = (id: string) => api.delete(`/api/admin/users/${id}`);
 export const changeUserPassword = (id: string, new_password: string) => api.patch(`/api/admin/users/${id}/change-password`, { new_password });
-export const getUserOrders = (id: string, page = 1, limit = 10, search = '') => 
+export const getUserOrders = (id: string, page = 1, limit = 10, search = '') =>
     api.get(`/api/admin/users/${id}/orders?page=${page}&limit=${limit}&search=${search}`);
 export const getUserCart = (id: string) => api.get(`/api/admin/users/${id}/cart`);
 
@@ -63,3 +77,7 @@ export const getUserCart = (id: string) => api.get(`/api/admin/users/${id}/cart`
 export const getAdminOrders = (page = 1, limit = 10, search = '', type = 'all') =>
     api.get(`/api/admin/orders?page=${page}&limit=${limit}&search=${search}&type=${type}`);
 export const getAdminOrderById = (id: string) => api.get(`/api/admin/orders/${id}`);
+
+// ─── Banner Images ────────────────────────────────────────────────────────────
+export const getBannerImages = () => api.get('/api/banner-images');
+export const updateBannerImages = (urls: string[]) => api.post('/api/banner-images', { urls });

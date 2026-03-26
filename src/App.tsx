@@ -12,6 +12,8 @@ import OrdersPage from './pages/OrdersPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import BannerManagementPage from './pages/BannerManagementPage';
 import CouponsPage from './pages/CouponsPage';
+import CoverDesignsPage from './pages/CoverDesignsPage';
+import ProfilePage from './pages/ProfilePage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -37,6 +39,8 @@ export default function App() {
           <Route path="admins" element={<AdminsPage />} />
           <Route path="banners" element={<BannerManagementPage />} />
           <Route path="coupons" element={<CouponsPage />} />
+          <Route path="cover-designs" element={<CoverDesignsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -51,6 +51,11 @@ export const updateAdmin = (id: string, data: { name?: string; password?: string
     api.patch(`/api/admin/admins/${id}`, data);
 export const deleteAdmin = (id: string) => api.delete(`/api/admin/admins/${id}`);
 
+// Admin Profile
+export const getAdminProfile = () => api.get('/api/admin/profile');
+export const updateAdminProfile = (data: { name?: string; profile_picture?: string }) => api.patch('/api/admin/profile', data);
+export const changeAdminPassword = (data: { oldPassword?: string; newPassword: string }) => api.patch('/api/admin/profile/password', data);
+
 // ─── File Upload (R2) ─────────────────────────────────────────────────────────
 export const uploadImage = (file: File) => {
     const form = new FormData();
@@ -59,11 +64,13 @@ export const uploadImage = (file: File) => {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 };
+export const deleteFile = (url: string) => api.post('/api/r2/delete', { url });
 
 // ─── Blogs ────────────────────────────────────────────────────────────────────
-export const getBlogs = (page = 1, limit = 10, published?: boolean) => {
+export const getBlogs = (page = 1, limit = 10, published?: boolean, search?: string) => {
     const params: Record<string, unknown> = { page, limit };
     if (published !== undefined) params.published = published;
+    if (search) params.search = search;
     return api.get('/api/blogs', { params });
 };
 export const getBlog = (id: string) => api.get(`/api/blogs/${id}`);
@@ -96,7 +103,15 @@ export const getBannerImages = () => api.get('/api/banner-images');
 export const updateBannerImages = (urls: string[]) => api.post('/api/banner-images', { urls });
 
 // ─── Coupons ──────────────────────────────────────────────────────────────────
-export const listCoupons = (limit = 10, starting_after?: string) =>
-    api.get('/api/admin/coupons', { params: { limit, starting_after } });
+export const listCoupons = (page = 1, limit = 20, search?: string) =>
+    api.get('/api/admin/coupons', { params: { page, limit, search } });
 export const createCoupon = (data: any) => api.post('/api/admin/coupons', data);
 export const deleteCoupon = (id: string) => api.delete(`/api/admin/coupons/${id}`);
+
+// ─── Cover Designs ────────────────────────────────────────────────────────────
+export const getAdminCoverDesigns = (page = 1, limit = 10, search = '') =>
+    api.get(`/api/admin/cover-designs?page=${page}&limit=${limit}&search=${search}`);
+export const getAdminCoverDesignById = (id: string) => api.get(`/api/admin/cover-designs/${id}`);
+export const createAdminCoverDesign = (data: any) => api.post('/api/admin/cover-designs', data);
+export const updateAdminCoverDesign = (id: string, data: any) => api.patch(`/api/admin/cover-designs/${id}`, data);
+export const deleteAdminCoverDesign = (id: string) => api.delete(`/api/admin/cover-designs/${id}`);

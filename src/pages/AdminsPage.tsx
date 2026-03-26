@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '../hooks/useDebounce';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
     useReactTable,
     getCoreRowModel,
@@ -40,6 +41,9 @@ export default function AdminsPage() {
     const [editForm, setEditForm] = useState(EDIT_INIT);
     const [editError, setEditError] = useState('');
 
+    const [showAddPass, setShowAddPass] = useState(false);
+    const [showEditPass, setShowEditPass] = useState(false);
+
     const [confirm, setConfirm] = useState<{
         show: boolean;
         title: string;
@@ -54,9 +58,12 @@ export default function AdminsPage() {
         onConfirm: () => { },
     });
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ['admins', page, search],
-        queryFn: () => getAdmins(page, limit, search).then(r => r.data.data),
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, isError, isFetching } = useQuery({
+        queryKey: ['admins', page, debouncedSearch],
+        queryFn: () => getAdmins(page, limit, debouncedSearch).then(r => r.data.data),
+        placeholderData: keepPreviousData,
     });
 
     const addMut = useMutation({
@@ -104,6 +111,7 @@ export default function AdminsPage() {
         setEditTarget(a);
         setEditForm({ name: a.name, password: '' });
         setEditError('');
+        setShowEditPass(false);
     };
 
     const columns = useMemo(() => [
@@ -198,17 +206,22 @@ export default function AdminsPage() {
                             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                         />
                     </div>
-                    <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={() => { setShowAdd(true); setAddError(''); setAddForm(ADD_INIT); }}>
+                    <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={() => { setShowAdd(true); setAddError(''); setAddForm(ADD_INIT); setShowAddPass(false); }}>
                         + Add Admin
                     </button>
                 </div>
             </div>
 
-            {isLoading && <div className="center"><div className="spinner" /></div>}
+            {isLoading && !data && <div className="center"><div className="spinner" /></div>}
             {isError && <div className="alert alert-error">Failed to load admins.</div>}
 
-            {!isLoading && !isError && (
-                <div className="table-wrap">
+            {data && !isError && (
+                <div className={`table-wrap ${isFetching ? 'fetching' : ''}`}>
+                    {isFetching && (
+                        <div className="table-loader-overlay">
+                            <div className="spinner-sm" />
+                        </div>
+                    )}
                     <table>
                         <thead>
                             {table.getHeaderGroups().map(hg => (
@@ -267,8 +280,22 @@ export default function AdminsPage() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Password</label>
-                                <input className="form-input" type="password" placeholder="Min 6 characters"
-                                    value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })} />
+                                <div className="password-input-wrapper" style={{ position: 'relative' }}>
+                                    <input className="form-input" 
+                                        type={showAddPass ? 'text' : 'password'} 
+                                        placeholder="Min 6 characters"
+                                        value={addForm.password} 
+                                        onChange={e => setAddForm({ ...addForm, password: e.target.value })} 
+                                        style={{ paddingRight: 40 }} />
+                                    <button type="button" className="password-toggle" onClick={() => setShowAddPass(!showAddPass)} 
+                                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', opacity: 0.6 }}>
+                                        {showAddPass ? (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                        ) : (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div className="modal-footer">
@@ -299,8 +326,22 @@ export default function AdminsPage() {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">New Password <span style={{ color: 'var(--text-dim)', fontWeight: 400 }}>(leave blank to keep current)</span></label>
-                                <input className="form-input" type="password" placeholder="Min 6 characters"
-                                    value={editForm.password} onChange={e => setEditForm({ ...editForm, password: e.target.value })} />
+                                <div className="password-input-wrapper" style={{ position: 'relative' }}>
+                                    <input className="form-input" 
+                                        type={showEditPass ? 'text' : 'password'} 
+                                        placeholder="Min 6 characters"
+                                        value={editForm.password} 
+                                        onChange={e => setEditForm({ ...editForm, password: e.target.value })} 
+                                        style={{ paddingRight: 40 }} />
+                                    <button type="button" className="password-toggle" onClick={() => setShowEditPass(!showEditPass)} 
+                                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', opacity: 1, color: 'var(--primary)' }}>
+                                        {showEditPass ? (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                        ) : (
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div className="modal-footer">

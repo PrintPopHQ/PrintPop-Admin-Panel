@@ -262,10 +262,28 @@ textarea.form-input {
 
 /* ── Table ── */
 .table-wrap {
+  position: relative;
   overflow-x: auto;
   margin-top: 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
+}
+
+.table-loader-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 17, 23, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: var(--radius);
+}
+
+.fetching table {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 table {

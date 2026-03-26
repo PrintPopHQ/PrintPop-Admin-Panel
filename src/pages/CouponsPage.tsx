@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '../hooks/useDebounce';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
     useReactTable,
     getCoreRowModel,
@@ -8,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { listCoupons, deleteCoupon, createCoupon } from '../api';
 import ActionMenu from '../components/ActionMenu';
+import ConfirmModal from '../components/ConfirmModal';
 import { toast } from 'react-hot-toast';
 
 interface Coupon {
@@ -46,13 +48,29 @@ const col = createColumnHelper<Coupon>();
 
 export default function CouponsPage() {
     const qc = useQueryClient();
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
     const [limit] = useState(20);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [form, setForm] = useState<CouponForm>(INIT_FORM);
+    const [confirm, setConfirm] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        show: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
 
-    const { data: coupons, isLoading, isError } = useQuery({
-        queryKey: ['coupons'],
-        queryFn: () => listCoupons(limit).then(r => r.data.data),
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, isError, isFetching } = useQuery({
+        queryKey: ['coupons', page, debouncedSearch],
+        queryFn: () => listCoupons(page, limit, debouncedSearch).then(r => r.data.data),
+        placeholderData: keepPreviousData,
     });
 
     const deleteMut = useMutation({
@@ -160,7 +178,17 @@ export default function CouponsPage() {
                     <ActionMenu items={[
                         {
                             icon: '🗑️', label: 'Delete', variant: 'danger',
-                            onClick: () => { if (window.confirm(`Delete coupon "${c.id}"?`)) deleteMut.mutate(c.id); },
+                            onClick: () => {
+                                setConfirm({
+                                    show: true,
+                                    title: 'Delete Coupon',
+                                    message: `Are you sure you want to delete coupon "${c.id}"? This action cannot be undone.`,
+                                    onConfirm: () => {
+                                        deleteMut.mutate(c.id);
+                                        setConfirm(prev => ({ ...prev, show: false }));
+                                    }
+                                });
+                            },
                             disabled: deleteMut.isPending,
                         },
                     ]} />
@@ -169,8 +197,9 @@ export default function CouponsPage() {
         }),
     ];
 
+    const coupons = data?.coupons || [];
     const table = useReactTable({
-        data: coupons || [],
+        data: coupons,
         columns,
         getCoreRowModel: getCoreRowModel()
     });
@@ -182,48 +211,84 @@ export default function CouponsPage() {
                     <h1 className="page-title">Coupons</h1>
                     <p className="page-subtitle">Manage Stripe discount coupons</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => {
-                    setForm(INIT_FORM);
-                    setShowCreateModal(true);
-                }}>
-                    + New Coupon
-                </button>
+
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div className="search-wrapper" style={{ minWidth: 260 }}>
+                        <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Search by ID, name, discount or duration..."
+                            className="search-input"
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); }}
+                        />
+                    </div>
+                    <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={() => {
+                        setForm(INIT_FORM);
+                        setShowCreateModal(true);
+                    }}>
+                        + New Coupon
+                    </button>
+                </div>
             </div>
 
-            {isLoading && <div className="center"><div className="spinner" /></div>}
+            {isLoading && !data && <div className="center"><div className="spinner" /></div>}
             {isError && <div className="alert alert-error">Failed to load coupons.</div>}
 
-            {!isLoading && !isError && (
-                <div className="table-wrap">
-                    <table>
-                        <thead>
-                            {table.getHeaderGroups().map(hg => (
-                                <tr key={hg.id}>
-                                    {hg.headers.map(h => (
-                                        <th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
-                                    ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody>
-                            {table.getRowModel().rows.length === 0 ? (
-                                <tr>
-                                    <td colSpan={columns.length} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
-                                        No coupons found.
-                                    </td>
-                                </tr>
-                            ) : (
-                                table.getRowModel().rows.map(row => (
-                                    <tr key={row.id}>
-                                        {row.getVisibleCells().map(cell => (
-                                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+            {data && !isError && (
+                <>
+                    <div className={`table-wrap ${isFetching ? 'fetching' : ''}`}>
+                        {isFetching && (
+                            <div className="table-loader-overlay">
+                                <div className="spinner-sm" />
+                            </div>
+                        )}
+                        <table>
+                            <thead>
+                                {table.getHeaderGroups().map(hg => (
+                                    <tr key={hg.id}>
+                                        {hg.headers.map(h => (
+                                            <th key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</th>
                                         ))}
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                ))}
+                            </thead>
+                            <tbody>
+                                {coupons.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={columns.length} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
+                                            No coupons found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    table.getRowModel().rows.map(row => (
+                                        <tr key={row.id}>
+                                            {row.getVisibleCells().map(cell => (
+                                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {data && data.lastPage > 1 && (
+                        <div className="pagination">
+                            <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
+                            {[...Array(data.lastPage)].map((_, i) => (
+                                <button key={i} className={`page-btn ${page === i + 1 ? 'active' : ''}`} onClick={() => setPage(i + 1)}>
+                                    {i + 1}
+                                </button>
+                            ))}
+                            <button className="page-btn" disabled={page === data.lastPage} onClick={() => setPage(p => p + 1)}>›</button>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>{data.total} total</span>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* ── Create Coupon Modal ── */}
@@ -333,6 +398,17 @@ export default function CouponsPage() {
                     </div>
                 </div>
             )}
+            {/* ── Confirm Modal ── */}
+            <ConfirmModal
+                show={confirm.show}
+                title={confirm.title}
+                message={confirm.message}
+                variant="danger"
+                confirmText="Delete"
+                onConfirm={confirm.onConfirm}
+                onCancel={() => setConfirm(prev => ({ ...prev, show: false }))}
+                isLoading={deleteMut.isPending}
+            />
         </div>
     );
 }

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '../hooks/useDebounce';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
     useReactTable,
@@ -27,9 +28,12 @@ export default function OrdersPage() {
     const [type, setType] = useState('all');
     const limit = 10;
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ['admin-orders', page, search, type],
-        queryFn: () => getAdminOrders(page, limit, search, type).then(res => res.data.data),
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, isError, isFetching } = useQuery({
+        queryKey: ['admin-orders', page, debouncedSearch, type],
+        queryFn: () => getAdminOrders(page, limit, debouncedSearch, type).then(res => res.data.data),
+        placeholderData: keepPreviousData,
     });
 
     const handleTabChange = (newType: string) => {
@@ -131,11 +135,16 @@ export default function OrdersPage() {
                 <button className={`tab-item ${type === 'user' ? 'active' : ''}`} onClick={() => handleTabChange('user')}>User Orders</button>
             </div>
 
-            {isLoading && <div className="center"><div className="spinner" /></div>}
+            {isLoading && !data && <div className="center"><div className="spinner" /></div>}
             {isError && <div className="alert alert-error">Failed to load orders.</div>}
 
-            {!isLoading && !isError && (
-                <div className="table-wrap">
+            {data && !isError && (
+                <div className={`table-wrap ${isFetching ? 'fetching' : ''}`}>
+                    {isFetching && (
+                        <div className="table-loader-overlay">
+                            <div className="spinner-sm" />
+                        </div>
+                    )}
                     <table>
                         <thead>
                             {table.getHeaderGroups().map(hg => (

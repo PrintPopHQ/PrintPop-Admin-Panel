@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '../hooks/useDebounce';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
     useReactTable,
     getCoreRowModel,
@@ -10,6 +11,7 @@ import {
 import DOMPurify from 'dompurify';
 import { getBlogs, deleteBlog, publishBlog, unpublishBlog } from '../api';
 import ActionMenu from '../components/ActionMenu';
+import ConfirmModal from '../components/ConfirmModal';
 import '../pages/BlogFormPage.css';
 
 interface Blog {
@@ -30,16 +32,35 @@ export default function BlogsPage() {
     const navigate = useNavigate();
     const qc = useQueryClient();
     const [page, setPage] = useState(1);
+    const [search, setSearch] = useState('');
     const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all');
     const [preview, setPreview] = useState<Blog | null>(null);
+    const [confirm, setConfirm] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant: 'danger' | 'primary' | 'success' | 'warning';
+        confirmText: string;
+    }>({
+        show: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'primary',
+        confirmText: 'Confirm'
+    });
     const limit = 10;
+
+    const debouncedSearch = useDebounce(search, 500);
 
     const published =
         filter === 'published' ? true : filter === 'draft' ? false : undefined;
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ['blogs', page, filter],
-        queryFn: () => getBlogs(page, limit, published).then(r => r.data.data),
+    const { data, isLoading, isError, isFetching } = useQuery({
+        queryKey: ['blogs', page, filter, debouncedSearch],
+        queryFn: () => getBlogs(page, limit, published, debouncedSearch).then(r => r.data.data),
+        placeholderData: keepPreviousData,
     });
 
     const deleteMut = useMutation({
@@ -97,12 +118,40 @@ export default function BlogsPage() {
                             icon: b.is_published ? '🔴' : '🟢',
                             label: b.is_published ? 'Unpublish' : 'Publish',
                             variant: b.is_published ? 'default' : 'success',
-                            onClick: () => publishMut.mutate({ id: b.id, pub: !b.is_published }),
+                            onClick: () => {
+                                if (b.is_published) {
+                                    setConfirm({
+                                        show: true,
+                                        title: 'Unpublish Blog',
+                                        message: `Are you sure you want to unpublish "${b.title}"?`,
+                                        variant: 'warning',
+                                        confirmText: 'Unpublish',
+                                        onConfirm: () => {
+                                            publishMut.mutate({ id: b.id, pub: false });
+                                            setConfirm(prev => ({ ...prev, show: false }));
+                                        }
+                                    });
+                                } else {
+                                    publishMut.mutate({ id: b.id, pub: true });
+                                }
+                            },
                             disabled: publishMut.isPending,
                         },
                         {
                             icon: '🗑️', label: 'Delete', variant: 'danger',
-                            onClick: () => { if (window.confirm(`Delete "${b.title}"?`)) deleteMut.mutate(b.id); },
+                            onClick: () => {
+                                setConfirm({
+                                    show: true,
+                                    title: 'Delete Blog',
+                                    message: `Are you sure you want to delete "${b.title}"? This action cannot be undone.`,
+                                    variant: 'danger',
+                                    confirmText: 'Delete',
+                                    onConfirm: () => {
+                                        deleteMut.mutate(b.id);
+                                        setConfirm(prev => ({ ...prev, show: false }));
+                                    }
+                                });
+                            },
                             disabled: deleteMut.isPending,
                         },
                     ]} />
@@ -123,30 +172,52 @@ export default function BlogsPage() {
                     <h1 className="page-title">Blogs</h1>
                     <p className="page-subtitle">Manage all blog posts</p>
                 </div>
-                <button className="btn btn-primary" onClick={() => navigate('/blogs/new')}>
-                    + New Blog
-                </button>
+
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div className="search-wrapper" style={{ minWidth: 260 }}>
+                        <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Search by title or author..."
+                            className="search-input"
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                        />
+                    </div>
+                    <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={() => navigate('/blogs/new')}>
+                        + New Blog
+                    </button>
+                </div>
             </div>
 
             {/* Filter tabs */}
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                 {(['all', 'published', 'draft'] as const).map(f => (
                     <button
                         key={f}
-                        className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-ghost'}`}
+                        className={`tab-item ${filter === f ? 'active' : ''}`}
                         onClick={() => { setFilter(f); setPage(1); }}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 16px', fontSize: 13, fontWeight: 500, color: filter === f ? 'var(--primary)' : 'var(--text-muted)', borderBottom: filter === f ? '2px solid var(--primary)' : '2px solid transparent', transition: 'all 0.2s' }}
                     >
                         {f.charAt(0).toUpperCase() + f.slice(1)}
                     </button>
                 ))}
             </div>
 
-            {isLoading && <div className="center"><div className="spinner" /></div>}
+            {isLoading && !data && <div className="center"><div className="spinner" /></div>}
             {isError && <div className="alert alert-error mt-4">Failed to load blogs.</div>}
 
-            {!isLoading && !isError && (
+            {data && !isError && (
                 <>
-                    <div className="table-wrap">
+                    <div className={`table-wrap ${isFetching ? 'fetching' : ''}`}>
+                        {isFetching && (
+                            <div className="table-loader-overlay">
+                                <div className="spinner-sm" />
+                            </div>
+                        )}
                         <table>
                             <thead>
                                 {table.getHeaderGroups().map(hg => (
@@ -237,6 +308,17 @@ export default function BlogsPage() {
                     </div>
                 </div>
             )}
+            {/* ── Confirm Modal ── */}
+            <ConfirmModal
+                show={confirm.show}
+                title={confirm.title}
+                message={confirm.message}
+                variant={confirm.variant}
+                confirmText={confirm.confirmText}
+                onConfirm={confirm.onConfirm}
+                onCancel={() => setConfirm(prev => ({ ...prev, show: false }))}
+                isLoading={deleteMut.isPending || publishMut.isPending}
+            />
         </div>
     );
 }

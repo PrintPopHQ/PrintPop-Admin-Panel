@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '../hooks/useDebounce';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
     useReactTable,
@@ -49,9 +50,12 @@ export default function UsersPage() {
         onConfirm: () => { },
     });
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ['users', page, search],
-        queryFn: () => getUsers(page, limit, search).then(res => res.data.data),
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, isError, isFetching } = useQuery({
+        queryKey: ['users', page, debouncedSearch],
+        queryFn: () => getUsers(page, limit, debouncedSearch).then(res => res.data.data),
+        placeholderData: keepPreviousData,
     });
 
     const addMut = useMutation({
@@ -222,11 +226,16 @@ export default function UsersPage() {
                 </div>
             </div>
 
-            {isLoading && <div className="center"><div className="spinner" /></div>}
+            {isLoading && !data && <div className="center"><div className="spinner" /></div>}
             {isError && <div className="alert alert-error">Failed to load users.</div>}
 
-            {!isLoading && !isError && (
-                <div className="table-wrap">
+            {data && !isError && (
+                <div className={`table-wrap ${isFetching ? 'fetching' : ''}`}>
+                    {isFetching && (
+                        <div className="table-loader-overlay">
+                            <div className="spinner-sm" />
+                        </div>
+                    )}
                     <table>
                         <thead>
                             {table.getHeaderGroups().map(hg => (

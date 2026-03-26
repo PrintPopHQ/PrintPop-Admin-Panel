@@ -56,6 +56,10 @@ export default function Layout() {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H4zm0 2h16v14H4V5zm2 2v2h4V7H6zm6 0v2h4V7h-4z" /></svg>
                         Banners
                     </NavLink>
+                    {/* <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/cover-designs">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" /></svg>
+                        Cover Designs
+                    </NavLink> */}
 
                     <p className="nav-section-label" style={{ marginTop: 16 }}>Management</p>
                     <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/users">
@@ -76,11 +80,21 @@ export default function Layout() {
                             Admins
                         </NavLink>
                     )}
+                    {/* <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/profile">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                        Profile & Settings
+                    </NavLink> */}
                 </nav>
 
                 <div className="sidebar-footer">
-                    <div className="admin-info">
-                        <div className="admin-avatar">{admin?.name?.[0]?.toUpperCase() ?? 'A'}</div>
+                    <div className="admin-info" style={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
+                        <div className="admin-avatar">
+                            {admin?.profile_picture ? (
+                                <img src={admin.profile_picture} alt="P" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                admin?.name?.[0]?.toUpperCase() ?? 'A'
+                            )}
+                        </div>
                         <div>
                             <p className="admin-name">{admin?.name}</p>
                             <p className="admin-role">{admin?.role === 'super_admin' ? 'Super Admin' : 'Admin'}</p>

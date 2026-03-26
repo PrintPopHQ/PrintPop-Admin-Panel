@@ -5,6 +5,7 @@ interface AdminUser {
     name: string;
     email: string;
     role: 'super_admin' | 'admin';
+    profile_picture?: string;
 }
 
 interface AuthContextType {
@@ -12,6 +13,7 @@ interface AuthContextType {
     token: string | null;
     login: (token: string, admin: AdminUser) => void;
     logout: () => void;
+    updateAdmin: (updatedAdmin: Partial<AdminUser>) => void;
     isSuperAdmin: boolean;
 }
 
@@ -38,8 +40,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAdmin(null);
     };
 
+    const updateAdmin = (updatedAdmin: Partial<AdminUser>) => {
+        setAdmin(prev => {
+            if (!prev) return null;
+            const nuevo = { ...prev, ...updatedAdmin };
+            localStorage.setItem('admin_user', JSON.stringify(nuevo));
+            return nuevo;
+        });
+    };
+
     return (
-        <AuthContext.Provider value={{ admin, token, login, logout, isSuperAdmin: admin?.role === 'super_admin' }}>
+        <AuthContext.Provider value={{ admin, token, login, logout, updateAdmin, isSuperAdmin: admin?.role === 'super_admin' }}>
             {children}
         </AuthContext.Provider>
     );

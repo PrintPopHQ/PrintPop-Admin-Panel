@@ -115,3 +115,15 @@ export const getAdminCoverDesignById = (id: string) => api.get(`/api/admin/cover
 export const createAdminCoverDesign = (data: any) => api.post('/api/admin/cover-designs', data);
 export const updateAdminCoverDesign = (id: string, data: any) => api.patch(`/api/admin/cover-designs/${id}`, data);
 export const deleteAdminCoverDesign = (id: string) => api.delete(`/api/admin/cover-designs/${id}`);
+
+// ─── Inventory Management ─────────────────────────────────────────────────────
+export const listInventory = (page = 1, limit = 10, search?: string, brandId?: string) =>
+    api.get('/api/admin/inventory', { params: { page, limit, search, brandId } });
+export const getInventoryBrands = () => api.get('/api/admin/inventory/brands');
+export const updateInventory = (data: { model_id: string; case_type: string; stock_quantity: number }) =>
+    api.post('/api/admin/inventory', data);
+export const deleteInventory = (id: string) => api.delete(`/api/admin/inventory/${id}`);
+export const addModel = (data: any) => api.post('/api/admin/inventory/model', data);
+export const getModel = (id: string) => api.get(`/api/admin/inventory/model/${id}`);
+export const updateModel = (id: string, data: any) => api.patch(`/api/admin/inventory/model/${id}`, data);
+export const deleteModel = (id: string) => api.delete(`/api/admin/inventory/model/${id}`);

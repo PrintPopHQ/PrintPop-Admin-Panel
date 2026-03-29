@@ -348,6 +348,12 @@ tr:hover td {
   color: var(--text-muted);
 }
 
+.badge-outline {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
 /* ── Modal ── */
 .modal-overlay {
   position: fixed;

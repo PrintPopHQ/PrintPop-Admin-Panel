@@ -12,6 +12,8 @@ import OrdersPage from './pages/OrdersPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import BannerManagementPage from './pages/BannerManagementPage';
 import CouponsPage from './pages/CouponsPage';
+import InventoryPage from './pages/InventoryPage.tsx';
+import ModelFormPage from './pages/ModelFormPage.tsx';
 import CoverDesignsPage from './pages/CoverDesignsPage';
 import ProfilePage from './pages/ProfilePage';
 
@@ -39,6 +41,9 @@ export default function App() {
           <Route path="admins" element={<AdminsPage />} />
           <Route path="banners" element={<BannerManagementPage />} />
           <Route path="coupons" element={<CouponsPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="inventory/model/add" element={<ModelFormPage />} />
+          <Route path="inventory/model/edit/:id" element={<ModelFormPage />} />
           <Route path="cover-designs" element={<CoverDesignsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>

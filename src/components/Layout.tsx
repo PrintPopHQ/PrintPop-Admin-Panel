@@ -56,10 +56,10 @@ export default function Layout() {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H4zm0 2h16v14H4V5zm2 2v2h4V7H6zm6 0v2h4V7h-4z" /></svg>
                         Banners
                     </NavLink>
-                    {/* <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/cover-designs">
+                    <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/cover-designs">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" /></svg>
                         Cover Designs
-                    </NavLink> */}
+                    </NavLink>
 
                     <p className="nav-section-label" style={{ marginTop: 16 }}>Management</p>
                     <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/users">
@@ -70,6 +70,10 @@ export default function Layout() {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
                         Orders
                     </NavLink>
+                    {/* <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/inventory">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
+                        Inventory
+                    </NavLink> */}
                     <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/coupons">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM3 7h12v10H3V7zm1 2v2h4V9H4zm6 0v2h4V9h-4zm-6 4v2h4v-2H4zm6 0v2h4v-2h-4z" /></svg>
                         Coupons

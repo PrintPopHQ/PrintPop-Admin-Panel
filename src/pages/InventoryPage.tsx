@@ -151,13 +151,13 @@ export default function InventoryPage() {
                             icon: '✏️', label: 'Edit Model',
                             onClick: () => navigate(`/inventory/model/edit/${model.id}`),
                         },
-                        {
-                            icon: '🗑️', label: 'Delete Model',
-                            onClick: () => {
-                                setModelToDelete(model);
-                                setShowDeleteModal(true);
-                            },
-                        },
+                        // {
+                        //     icon: '🗑️', label: 'Delete Model',
+                        //     onClick: () => {
+                        //         setModelToDelete(model);
+                        //         setShowDeleteModal(true);
+                        //     },
+                        // },
                     ]} />
                 );
             },
@@ -175,20 +175,17 @@ export default function InventoryPage() {
 
     return (
         <div>
-            <div className="page-header">
+            <div className="page-header" style={{ marginBottom: 16, alignItems: 'flex-start' }}>
                 <div>
                     <h1 className="page-title">Inventory</h1>
                     <p className="page-subtitle">Manage stock levels for device models</p>
                 </div>
 
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <button className="btn btn-primary" onClick={() => navigate('/inventory/model/add')}>
-                        <span>+</span> Add Model
-                    </button>
-                    <div className="search-wrapper" style={{ minWidth: 260 }}>
+                    <div className="search-wrapper" style={{ minWidth: 300 }}>
                         <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
                             <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65"></line>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                         <input
                             type="text"
@@ -198,28 +195,34 @@ export default function InventoryPage() {
                             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                         />
                     </div>
-
-                    <select
-                        className="search-input"
-                        style={{ 
-                            width: 'auto', 
-                            minWidth: 150, 
-                            paddingLeft: 14, 
-                            paddingRight: 36,
-                            appearance: 'none',
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: 'right 10px center',
-                        }}
-                        value={brandId}
-                        onChange={(e) => { setBrandId(e.target.value); setPage(1); }}
-                    >
-                        <option value="">All Brands</option>
-                        {brands.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select>
+                    <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={() => navigate('/inventory/model/add')}>
+                        + Add Model
+                    </button>
                 </div>
+            </div>
+
+            <div style={{ marginBottom: 24, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginRight: 4 }}>Filter by:</div>
+                <select
+                    className="search-input"
+                    style={{ 
+                        width: 'auto', 
+                        minWidth: 180, 
+                        paddingLeft: 14, 
+                        paddingRight: 36,
+                        appearance: 'none',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 10px center',
+                    }}
+                    value={brandId}
+                    onChange={(e) => { setBrandId(e.target.value); setPage(1); }}
+                >
+                    <option value="">All Brands</option>
+                    {brands.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                </select>
             </div>
 
             {isModelsLoading && !modelsData && <div className="center"><div className="spinner" /></div>}

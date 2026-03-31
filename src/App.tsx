@@ -16,6 +16,7 @@ import InventoryPage from './pages/InventoryPage.tsx';
 import ModelFormPage from './pages/ModelFormPage.tsx';
 import CoverDesignsPage from './pages/CoverDesignsPage';
 import ProfilePage from './pages/ProfilePage';
+import PricingPage from './pages/PricingPage.tsx';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="inventory/model/add" element={<ModelFormPage />} />
           <Route path="inventory/model/edit/:id" element={<ModelFormPage />} />
           <Route path="cover-designs" element={<CoverDesignsPage />} />
+          <Route path="pricing" element={<PricingPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

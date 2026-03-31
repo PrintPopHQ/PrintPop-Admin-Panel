@@ -127,3 +127,9 @@ export const addModel = (data: any) => api.post('/api/admin/inventory/model', da
 export const getModel = (id: string) => api.get(`/api/admin/inventory/model/${id}`);
 export const updateModel = (id: string, data: any) => api.patch(`/api/admin/inventory/model/${id}`, data);
 export const deleteModel = (id: string) => api.delete(`/api/admin/inventory/model/${id}`);
+
+// ─── Pricing Management ──────────────────────────────────────────────────────────
+export const getPricing = () => api.get('/api/admin/pricing');
+export const getPricingMetadata = () => api.get('/api/admin/pricing/metadata');
+export const updatePricing = (data: { case_type: string; plan_type: string; price: number }) =>
+    api.post('/api/admin/pricing', data);

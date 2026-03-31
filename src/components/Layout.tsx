@@ -70,10 +70,14 @@ export default function Layout() {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
                         Orders
                     </NavLink>
-                    {/* <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/inventory">
+                    <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/pricing">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        Pricing
+                    </NavLink>
+                    <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/inventory">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
-                        Inventory
-                    </NavLink> */}
+                         Inventory
+                    </NavLink>
                     <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/coupons">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM3 7h12v10H3V7zm1 2v2h4V9H4zm6 0v2h4V9h-4zm-6 4v2h4v-2H4zm6 0v2h4v-2h-4z" /></svg>
                         Coupons

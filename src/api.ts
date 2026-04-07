@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = 'https://printpop-be.onrender.com';
-// const API_BASE = 'http://localhost:8080';
+// const API_BASE = 'https://printpop-be.onrender.com';
+const API_BASE = 'http://localhost:8080';
 
 export const api = axios.create({ baseURL: API_BASE });
 
@@ -97,6 +97,8 @@ export const getUserCart = (id: string) => api.get(`/api/admin/users/${id}/cart`
 export const getAdminOrders = (page = 1, limit = 10, search = '', type = 'all') =>
     api.get(`/api/admin/orders?page=${page}&limit=${limit}&search=${search}&type=${type}`);
 export const getAdminOrderById = (id: string) => api.get(`/api/admin/orders/${id}`);
+export const updateOrderTracking = (id: string, tracking_id: string) =>
+    api.patch(`/api/admin/orders/${id}/tracking`, { tracking_id });
 
 // ─── Banner Images ────────────────────────────────────────────────────────────
 export const getBannerImages = () => api.get('/api/banner-images');

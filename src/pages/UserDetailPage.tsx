@@ -122,6 +122,42 @@ export default function UserDetailPage() {
                 );
             }
         }),
+        col.display({
+            id: 'shipping',
+            header: 'Shipping',
+            cell: ({ row }) => {
+                const details = row.original.shipping_details;
+                if (!details) return <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>—</span>;
+                return (
+                    <div style={{ fontSize: 12 }}>
+                        <div style={{ fontWeight: 500 }}>{details.shippingMethodName}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>${Number(details.shippingCost).toFixed(2)}</div>
+                    </div>
+                );
+            }
+        }),
+        col.accessor('tracking_id', {
+            header: 'Tracking',
+            cell: ({ row, getValue }) => {
+                const id = getValue();
+                const status = row.original.payment_status;
+                if (!id) {
+                    if (status === 'PAID') {
+                        return (
+                            <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: 10, fontWeight: 700 }}>
+                                ⚠️ NEEDS DISPATCH
+                            </span>
+                        );
+                    }
+                    return <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>—</span>;
+                }
+                return (
+                    <span style={{ fontSize: 11, fontFamily: 'monospace', background: 'var(--surface2)', padding: '4px 8px', borderRadius: 4, color: 'var(--text-dim)' }}>
+                        {id}
+                    </span>
+                );
+            }
+        }),
         col.accessor('total_price', {
             header: 'Total',
             cell: info => <span style={{ fontWeight: 600 }}>${Number(info.getValue()).toFixed(2)}</span>,

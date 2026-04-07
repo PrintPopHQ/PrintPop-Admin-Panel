@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     useReactTable,
     getCoreRowModel,
     flexRender,
     createColumnHelper,
 } from '@tanstack/react-table';
-import { getAdminOrderById } from '../api';
+import { getAdminOrderById, updateOrderTracking } from '../api';
 import ActionMenu from '../components/ActionMenu';
+import { toast } from 'react-hot-toast';
 
 const col = createColumnHelper<any>();
 
@@ -16,7 +17,9 @@ export default function OrderDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const qc = useQueryClient();
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [localTrackingId, setLocalTrackingId] = useState('');
 
     const backPath = location.state?.from || '/orders';
 
@@ -24,6 +27,23 @@ export default function OrderDetailsPage() {
         queryKey: ['admin-order', id],
         queryFn: () => getAdminOrderById(id!).then(res => res.data.data),
         enabled: !!id,
+    });
+
+    useEffect(() => {
+        if (order?.tracking_id) {
+            setLocalTrackingId(order.tracking_id);
+        }
+    }, [order]);
+
+    const trackingMutation = useMutation({
+        mutationFn: () => updateOrderTracking(id!, localTrackingId),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['admin-order', id] });
+            toast.success('Order tracking updated and customer notified');
+        },
+        onError: (err: any) => {
+            toast.error(err?.message || 'Failed to update tracking');
+        }
     });
 
     const columns = [
@@ -79,7 +99,12 @@ export default function OrderDetailsPage() {
                                 label: 'Preview Item',
                                 icon: '👁️',
                                 onClick: () => setPreviewImage(img),
-                            }
+                            },
+                            ...(item.design_image_url ? [{
+                                label: 'View Final Design',
+                                icon: '🎨',
+                                onClick: () => setPreviewImage(item.design_image_url),
+                            }] : [])
                         ]}
                     />
                 );
@@ -184,6 +209,38 @@ export default function OrderDetailsPage() {
                         </p>
                         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.country}</p>
                         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.phone}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid-1-col" style={{ marginBottom: 24 }}>
+                <div className="card">
+                    <h3 className="card-title">Fulfillment & Tracking</h3>
+                    <div className="info-list" style={{ gap: 16 }}>
+                        <div className="info-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                            <label>Tracking ID</label>
+                            <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+                                <input 
+                                    type="text" 
+                                    className="form-input" 
+                                    style={{ flex: 1 }}
+                                    placeholder="Enter tracking ID..."
+                                    value={localTrackingId}
+                                    onChange={(e) => setLocalTrackingId(e.target.value)}
+                                />
+                                <button 
+                                    className="btn btn-primary" 
+                                    style={{ whiteSpace: 'nowrap' }}
+                                    onClick={() => trackingMutation.mutate()}
+                                    disabled={trackingMutation.isPending || (!localTrackingId && !order?.tracking_id)}
+                                >
+                                    {trackingMutation.isPending ? 'Updating...' : order?.tracking_id ? 'Update Tracking' : 'Mark as Dispatched'}
+                                </button>
+                            </div>
+                            <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+                                Entering a tracking ID will notify the customer via email that their order has been dispatched.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

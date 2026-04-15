@@ -17,7 +17,6 @@ interface CoverDesign {
     name: string;
     image_url: string;
     design_image_url: string;
-    price: string | number;
     created_at: string;
 }
 
@@ -25,14 +24,12 @@ interface DesignForm {
     name: string;
     image_url: string;
     design_image_url: string;
-    price: string;
 }
 
 const INIT_FORM: DesignForm = {
     name: '',
     image_url: '',
     design_image_url: '',
-    price: '',
 };
 
 const col = createColumnHelper<CoverDesign>();
@@ -116,7 +113,6 @@ export default function CoverDesignsPage() {
         e.preventDefault();
         const payload = {
             ...form,
-            price: parseFloat(form.price),
         };
         saveMut.mutate(payload, {
             onSuccess: () => {
@@ -131,7 +127,6 @@ export default function CoverDesignsPage() {
             name: design.name,
             image_url: design.image_url,
             design_image_url: design.design_image_url,
-            price: design.price.toString(),
         });
         setShowModal(true);
     };
@@ -161,10 +156,6 @@ export default function CoverDesignsPage() {
         col.accessor('name', {
             header: 'Name',
             cell: info => <span style={{ fontWeight: 600 }}>{info.getValue()}</span>,
-        }),
-        col.accessor('price', {
-            header: 'Price',
-            cell: info => `$${parseFloat(info.getValue().toString()).toFixed(2)}`,
         }),
         col.accessor('created_at', {
             header: 'Created',
@@ -303,18 +294,6 @@ export default function CoverDesignsPage() {
                                     placeholder="e.g. Cyberpunk Neon"
                                     value={form.name}
                                     onChange={e => setForm({ ...form, name: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Price ($)</label>
-                                <input
-                                    className="form-input"
-                                    type="number"
-                                    step="0.01"
-                                    required
-                                    placeholder="29.99"
-                                    value={form.price}
-                                    onChange={e => setForm({ ...form, price: e.target.value })}
                                 />
                             </div>
 

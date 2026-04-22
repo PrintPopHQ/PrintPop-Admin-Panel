@@ -192,9 +192,9 @@ export default function PricingPage() {
                                                     <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground bg-surface2 px-2 py-1 rounded">
                                                         {count} UNIT{count > 1 ? 'S' : ''}
                                                     </span>
-                                                    <span className="text-[10px] font-medium text-muted-foreground">
+                                                    {/* <span className="text-[10px] font-medium text-muted-foreground">
                                                         {prices[key] ? `(${(Number(prices[key]) / count).toFixed(2)}/ea)` : ''}
-                                                    </span>
+                                                    </span> */}
                                                 </div>
                                             </div>
                                         );

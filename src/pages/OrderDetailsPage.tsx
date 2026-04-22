@@ -73,7 +73,12 @@ export default function OrderDetailsPage() {
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                             </button>
                         </div>
-                        <span style={{ fontWeight: 500 }}>{info.getValue() || 'Custom Item'}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontWeight: 500 }}>{info.getValue() || 'Custom Item'}</span>
+                            <span style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'capitalize' }}>
+                                {item.material?.replace('_', ' ')} Case
+                            </span>
+                        </div>
                     </div>
                 );
             }
@@ -122,7 +127,10 @@ export default function OrderDetailsPage() {
     if (isError || !order) return <div className="center">Order not found.</div>;
 
     const shipping = order.shipping_address || {};
-    const billing = order.billing_address || shipping; // Fallback to shipping if billing is null
+    const shippingDetails = order.shipping_details || {};
+    const billing = order.billing_address || shipping;
+    // For billing details, we might not have 'billing_details' from backend, so fallback to shippingDetails
+    const billingDetails = order.billing_details || shippingDetails;
 
     return (
         <div className="order-details-page">
@@ -147,20 +155,29 @@ export default function OrderDetailsPage() {
                     <div className="info-list">
                         <div className="info-item">
                             <label>Payment Method</label>
-                            <span>{order.payment_method || 'N/A'}</span>
+                            <span>{order.payment_method || 'Stripe'}</span>
                         </div>
                         <div className="info-item">
-                            <label>Financial Status</label>
-                            <span>{order.financial_status || 'PAID'}</span>
+                            <label>Payment Status</label>
+                            <span>{order.payment_status || 'PAID'}</span>
                         </div>
                         <div className="info-item">
                             <label>Shipping Method</label>
-                            <span>{order.shipping_method || 'Standard Shipping'}</span>
+                            <span>{shippingDetails.shippingMethodName || order.shipping_method || 'Standard Shipping'}</span>
                         </div>
                         <div className="info-item">
                             <label>Placed On</label>
                             <span>{new Date(order.created_at).toLocaleString()}</span>
                         </div>
+                        {order.coupon_details && (
+                            <div className="info-item" style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--border)' }}>
+                                <label>Coupon Code</label>
+                                <span className="badge badge-sm" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                                    {order.coupon_details.code} 
+                                    ({order.coupon_details.percent_off ? `${order.coupon_details.percent_off}% off` : `$${order.coupon_details.amount_off} off`})
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -187,28 +204,28 @@ export default function OrderDetailsPage() {
                 <div className="card">
                     <h3 className="card-title">Shipping Address</h3>
                     <div className="info-list" style={{ gap: 8 }}>
-                        <p style={{ fontWeight: 600 }}>{shipping.first_name} {shipping.last_name}</p>
-                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{shipping.address1}</p>
-                        {shipping.address2 && <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{shipping.address2}</p>}
+                        <p style={{ fontWeight: 600 }}>{shippingDetails.firstName} {shippingDetails.lastName}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{shipping.streetAddress1}</p>
+                        {shipping.streetAddress2 && <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{shipping.streetAddress2}</p>}
                         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-                            {shipping.city}, {shipping.province_code} {shipping.zip}
+                            {shipping.suburb}, {shipping.state} {shipping.postal}
                         </p>
                         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{shipping.country}</p>
-                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{shipping.phone}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{shippingDetails.phone}</p>
                     </div>
                 </div>
 
                 <div className="card">
                     <h3 className="card-title">Billing Address</h3>
                     <div className="info-list" style={{ gap: 8 }}>
-                        <p style={{ fontWeight: 600 }}>{billing.first_name} {billing.last_name}</p>
-                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.address1}</p>
-                        {billing.address2 && <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.address2}</p>}
+                        <p style={{ fontWeight: 600 }}>{billingDetails.firstName} {billingDetails.lastName}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.streetAddress1}</p>
+                        {billing.streetAddress2 && <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.streetAddress2}</p>}
                         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-                            {billing.city}, {billing.province_code} {billing.zip}
+                            {billing.suburb}, {billing.state} {billing.postal}
                         </p>
                         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.country}</p>
-                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billing.phone}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{billingDetails.phone}</p>
                     </div>
                 </div>
             </div>

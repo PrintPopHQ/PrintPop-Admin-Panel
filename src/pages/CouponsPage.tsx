@@ -22,6 +22,7 @@ interface Coupon {
     duration_in_months: number | null;
     created: number;
     valid: boolean;
+    metadata?: Record<string, string>;
 }
 
 interface CouponForm {
@@ -29,7 +30,7 @@ interface CouponForm {
     name: string;
     amount_off: string;
     percent_off: string;
-    duration: 'forever' | 'once' | 'repeating';
+    duration: 'forever' | 'once' | 'repeating' | 'first_time_order';
     duration_in_months: string;
     currency: string;
 }
@@ -39,7 +40,7 @@ const INIT_FORM: CouponForm = {
     name: '',
     amount_off: '',
     percent_off: '',
-    duration: 'forever',
+    duration: 'first_time_order',
     duration_in_months: '',
     currency: 'aud',
 };
@@ -160,7 +161,9 @@ export default function CouponsPage() {
             header: 'Duration',
             cell: info => {
                 const d = info.getValue();
-                const months = info.row.original.duration_in_months;
+                const c = info.row.original;
+                if (c.metadata?.first_order_only === 'true') return 'First Time Order';
+                const months = c.duration_in_months;
                 if (d === 'repeating' && months) return `Repeating (${months}mo)`;
                 return d.charAt(0).toUpperCase() + d.slice(1);
             },
@@ -365,6 +368,7 @@ export default function CouponsPage() {
                             <div className="form-group">
                                 <label className="form-label">Duration</label>
                                 <select className="form-input" value={form.duration} onChange={setField('duration')}>
+                                    <option value="first_time_order">First Time Order (Only for new customers)</option>
                                     <option value="forever">Forever (Multiple orders)</option>
                                     <option value="once">Once (Single order)</option>
                                     <option value="repeating">Repeating (Specific number of months)</option>
